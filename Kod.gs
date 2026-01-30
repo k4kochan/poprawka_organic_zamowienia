@@ -70,18 +70,10 @@ var reguly = {
 function trigOnOpen() {
   dodajMenu();                 // lekkie
   // ustaw_Kolor_i_blokowanie(); // opcjonalnie, lekkie
-  // pierAlert();                 // opcjonalnie
+
 }
 
-// ======================= ALERTY (jak u Ciebie) =======================
-function pierAlert(){
-  const ht_wazne = HtmlService.createHtmlOutputFromFile("wazne").setWidth(800).setHeight(500);
-  SpreadsheetApp.getUi().showModalDialog(ht_wazne,"WAŻNE Przeczytaj do końca!!")
-}
-function nastAlert(){
-  const ht_wazne2 = HtmlService.createHtmlOutputFromFile("wazne2").setWidth(800).setHeight(500);
-  SpreadsheetApp.getUi().showModalDialog(ht_wazne2,"WAŻNE Przeczytaj do końca!!")
-}
+
 
 // ======================= MENU =======================
 function dodajMenu() {
@@ -149,132 +141,6 @@ function dodajRegulyDlaWiersza_i_Arkusza(numerWiersza, nazwaArkusza) {
   zakres4.setDataValidation(regulaMenu);
 }
 
-// ======================= NARZĘDZIA FINANSOWE (jak u Ciebie) =======================
-function liczKontoGotowka(){
-  sprawdzCzyZaplaconeCaloscIkoloruj();
-  var ssA = SpreadsheetApp.getActive().getActiveSheet();
-  var daneAktArk = ssA.getDataRange().getValues();
-  daneAktArk.shift();
-  var rngA = ssA.getRange;
-  var lr = ssA.getLastRow();
-  var ui = SpreadsheetApp.getUi();
-  var result = ui.alert(
-    "Potrzebne do prawidłowego działania skryptu",
-    "Sprzwdź czy wszystke pola 'Wartość pozycji' i 'Nazwa produktu' są wypełnione?",
-    ui.ButtonSet.YES_NO)
-  if(result == ui.Button.YES){
-    var daneOn = rngA("O2:N"+lr).getValues();
-    var daneKto = rngA("I2:I"+lr).getValues();
-    var danePodzelonaWplata = rngA(2,col_podzielonaWplata+1,lr-1).getValues().flat();
-    var ind_got = []
-    var ind_kon =[]
-    var tylePowinnoByc = []
-    daneAktArk.forEach(function(wiersz,ind_wier){
-      if(wiersz[col_cenSpec] != "" && wiersz[col_status] != "refunded" && wiersz[col_status] != "cancelled" && wiersz[col_status] != "failed") {
-        tylePowinnoByc.push(wiersz[col_cenSpec])
-      } else if ( wiersz[col_status] != "refunded" && wiersz[col_status] != "cancelled" && wiersz[col_status] != "failed"){
-        tylePowinnoByc.push(wiersz[col_warPoz])
-      }
-    })
-    tylePowinnoByc =tylePowinnoByc.flat().map(n => n*1).reduce((a,b) => a+b);
-
-    daneKto.forEach((a,i) => { if(a != "") {ind_got.push(i)} else ind_kon.push(i) })
-
-    var daneGot =[];
-    var daneKon =[];
-    danePodzelonaWplata.forEach(function(wiersz_P,i){
-      if (wiersz_P == true) {rngA(i+2, col_podzielonaWplata+1).insertCheckboxes().setValue(true)}
-      else {rngA(i+2, col_podzielonaWplata+1).insertCheckboxes().setValue(false)}
-    })
-    ind_got.forEach(e => {
-      if(danePodzelonaWplata[e]== true){
-        daneKon.push(daneAktArk[e][col_zadatek])
-        daneGot.push(daneAktArk[e][col_drWpl])
-      } else {
-        daneGot.push(daneOn[e])
-      }
-    })
-    ind_kon.forEach(e => {
-      if(danePodzelonaWplata[e]== true){
-        daneKon.push(daneAktArk[e][col_zadatek])
-        daneGot.push(daneAktArk[e][col_drWpl])
-      } else {daneKon.push(daneOn[e])}
-    })
-
-    if(daneGot == false){ 
-      daneKon = daneKon.flat().map(n => n*1).reduce((a,b) => a+b);
-      ui.alert(`Nie ma wpłat gotówka, a na koncie jest równo: ${daneKon} Cebulionów :D\x0A Tyule brakuje: ${tylePowinnoByc-daneKon}PLN\x0A A tyle powinno być: ${tylePowinnoByc}PLN`);
-    }
-    if (daneKon == false){
-      daneGot = daneGot.flat().map(n => n*1).reduce((a,b) => a+b);
-      ui.alert(`Nie ma wpłat gotówka, a na koncie jest równo: ${daneGot} Cebulionów :D\x0A Tyule brakuje: ${tylePowinnoByc-daneGot}PLN\x0A A tyle powinno być: ${tylePowinnoByc}PLN`);
-    }
-    if(daneKon != false && daneGot != false){
-      daneKon = daneKon.flat().map(n => n*1).reduce((a,b) => a+b);
-      daneGot = daneGot.flat().map(n => n*1).reduce((a,b) => a+b);
-      var suma = daneKon+daneGot
-      var tylebrakuje = tylePowinnoByc-suma
-      ui.alert('Na koncie jest: '+daneKon + " PLN.\x0A Gotówki jest: "+daneGot + " PLN. \x0A W sumie:  "+suma+' Cebulionów :D\x0A\x0A Tyle powinno być: '+tylePowinnoByc+"\x0A A tyle brakuje: "+tylebrakuje);
-    }
-  }
-}
-function sprawdzCzyZaplaconeCaloscIkoloruj(){
-  var ssA = SpreadsheetApp.getActive().getActiveSheet();
-  var rngA = ssA.getRange;
-  var daneAktywnegoArkusza = ssA.getDataRange().getValues();
-  var naglowkiL = daneAktywnegoArkusza.shift();
-
-  function index_col_local(nazwa_col){ return naglowkiL.indexOf(nazwa_col) }
-  function dane_col(nazwaKolumnySzukanej){return nazwaKolumnySzukanej = daneAktywnegoArkusza.map(e => e[index_col_local(nazwaKolumnySzukanej)])}
-  function range_do_danychA(nazwaCol){return rngA(2,index_col_local(nazwaCol)+1,daneAktywnegoArkusza.length)}
-
-  rngA(2,col_podziekowanieZaCalosc+1,daneAktywnegoArkusza.length,6).insertCheckboxes()
-  range_do_danychA("Zapłacone całość").insertCheckboxes()
-
-  daneAktywnegoArkusza.forEach((wiersz,ind) => {
-    if(wiersz[col_cenSpec] == "" && wiersz[col_zadatek] + wiersz[col_drWpl] < wiersz[col_warPoz]) {
-      rngA(ind+2,col_zaplaconeCalosc+1).setValue(false);
-    }
-    if(wiersz[col_cenSpec] != "" && wiersz[col_zadatek] + wiersz[col_drWpl] < wiersz[col_cenSpec]){
-      rngA(ind+2,col_zaplaconeCalosc+1).setValue(false);
-    }
-    if(wiersz[col_status] == "cancelled" || wiersz[col_status] == "failed"){
-      rngA(ind+2,col_zaplaconeCalosc+1).setValue(false);
-    }
-    if( wiersz[col_status] == "completed" && wiersz[col_warPoz] <= wiersz[col_warZam]){ 
-      rngA(ind+2,col_zaplaconeCalosc+1).setValue(true)
-      rngA(ind+2,index_col_local("Zadatek")+1).setValue(wiersz[col_warPoz]);      
-    }
-    if( wiersz[col_status] == "completed" && wiersz[col_warPoz] >= wiersz[col_warZam] && wiersz[col_sposobPlatnosci]=="Przelewy24"){ 
-      rngA(ind+2,index_col_local("Zadatek")+1).setValue(wiersz[col_warZam]);      
-    }
-    if( wiersz[col_cenSpec] != "" && wiersz[col_zadatek] + wiersz[col_drWpl] >= wiersz[col_cenSpec]){
-      rngA(ind+2,col_zaplaconeCalosc+1).setValue(true);
-    }
-    else if(wiersz[col_warPoz] != "" && wiersz[col_zadatek] + wiersz[col_drWpl] >= wiersz[col_warPoz]){
-      rngA(ind+2,col_zaplaconeCalosc+1).setValue(true);
-    }
-  });
-
-  var daneTab_ZaplacCalo = dane_col("Zapłacone całość");
-  daneTab_ZaplacCalo.forEach((el,ind) => {
-    if(el == true){ 
-      rngA(ind+2,col_imie+1).setBackground(zielony_status);
-      rngA(ind+2,col_nazwisko+1).setBackground(zielony_status);
-      rngA(ind+2,col_podziekowanieZaCalosc,1,4).setBackground(jasnoZielony_mail);
-      rngA(ind+2,col_podziekowanieZaCalosc+4,1,2).setBackground(jasnoCzerwony_mail)
-    }
-    if(el == false){
-      rngA(ind+2,col_podziekowanieZaCalosc+2,1,4).setBackground(jasnoZielony_mail);
-      rngA(ind+2,col_podziekowanieZaCalosc,1,2).setBackground(jasnoCzerwony_mail);
-    }
-    if((daneAktywnegoArkusza[ind][col_status] == "cancelled" || daneAktywnegoArkusza[ind][col_status] == "failed") && el == false){
-      rngA(ind+2,col_imie+1).setBackground(mocnyCzerwony_status);
-      rngA(ind+2,col_nazwisko+1).setBackground(mocnyCzerwony_status);
-      rngA(ind+2,col_podziekowanieZaCalosc,1,6).setBackground(jasnoCzerwony_mail)
-    }
-  })
-}
 
 // ======================= NOWE: helpery do sync/zakładek =======================
 
