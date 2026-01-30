@@ -1,7 +1,7 @@
 // ===== funkcje i zmienne pomocnicze zadeklarowane globalnie =========
 var ss = SpreadsheetApp.getActiveSpreadsheet();
 var sheet = ss.getSheetByName("Baza zamowien z organicflow");
-var rng = sheet.getRange;
+var rng = sheet.getRange.bind(sheet);
 var caleDaneArkusza = sheet.getDataRange().getValues(); // pierwszy [nr wiersza - 2] drugi[ index_col -1 ]
 var naglowki = caleDaneArkusza.shift(); //wyciety wiersz nagłówków
 
@@ -482,4 +482,3 @@ function syncUnsyncedRows() {
     lock.releaseLock();
   }
 }
-
